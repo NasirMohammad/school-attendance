@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: erfanasir/school-attendance-frontend:v3
+          image: erfanasir/school-attendance-frontend:v4
 
           ports:
             - containerPort: 80

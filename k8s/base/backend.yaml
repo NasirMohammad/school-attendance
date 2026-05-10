@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: attendance-backend
-          image: erfanasir/school-attendance-backend:v1
+          image: erfanasir/school-attendance-backend:v2
 
           ports:
             - containerPort: 3000

@@ -89,6 +89,31 @@ app.post("/attendance", async (req, res) => {
   }
 });
 
+app.get("/attendance", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        attendance.id,
+        students.name,
+        students.class_name,
+        attendance.status,
+        attendance.created_at
+      FROM attendance
+      JOIN students
+      ON students.id = attendance.student_id
+      ORDER BY attendance.created_at DESC
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Failed to fetch attendance"
+    });
+  }
+});
+
 const PORT = 3000;
 
 app.listen(PORT, () => {

@@ -46,7 +46,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="bg-slate-900 text-white px-8 py-4 shadow-lg">
-        <h1 className="text-3xl font-bold">School Attendance Dashboard</h1>
+        <h1 className="text-3xl font-bold">School Attendance Dashboard CI/CD Working</h1>
       </div>
 
       <div className="max-w-6xl mx-auto p-8">

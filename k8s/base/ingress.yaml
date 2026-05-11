@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: attendance-ingress
   namespace: attendance
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 
 spec:
   ingressClassName: nginx
@@ -11,16 +13,16 @@ spec:
     - host: attendance.local
       http:
         paths:
-          - path: /api
-            pathType: Prefix
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: attendance-backend
                 port:
                   number: 80
 
-          - path: /
-            pathType: Prefix
+          - path: /(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: attendance-frontend

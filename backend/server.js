@@ -44,11 +44,25 @@ app.post("/students", async (req, res) => {
       "INSERT INTO students(name, class_name) VALUES($1, $2) RETURNING *",
       [name, class_name]
     );
-
+    
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to add student" });
+  }
+});
+
+app.delete("/students/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await pool.query("DELETE FROM attendance WHERE student_id = $1", [id]);
+    await pool.query("DELETE FROM students WHERE id = $1", [id]);
+
+    res.json({ message: "Student deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete student" });
   }
 });
 

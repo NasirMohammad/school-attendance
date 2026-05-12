@@ -56,6 +56,12 @@ function App() {
     await loadAttendance();
   };
 
+  const deleteStudent = async (id) => {
+    await axios.delete(`/api/students/${id}`);
+    await loadStudents();
+    await loadAttendance();
+  };
+
   const presentCount = records.filter((r) => r.status === "present").length;
   const absentCount = records.filter((r) => r.status === "absent").length;
 
@@ -158,6 +164,12 @@ function App() {
                   >
                     Absent
                   </button>
+                  <button
+                    onClick={() => deleteStudent(student.id)}
+                    className="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2 rounded-lg transition"
+                  >
+                    Delete
+                 </button>
                 </div>
               </div>
             ))}

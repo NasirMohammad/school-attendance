@@ -11,6 +11,22 @@ app.get("/api/students", async (req, res) => {
   res.json(result.rows);
 });
 
+app.post("/students", async (req, res) => {
+  try {
+    const { name, class_name } = req.body;
+
+    const result = await pool.query(
+      "INSERT INTO students(name, class_name) VALUES($1, $2) RETURNING *",
+      [name, class_name]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to add student" });
+  }
+});
+
 app.post("/api/attendance", async (req, res) => {
   const { student_id, status } = req.body;
   await pool.query(

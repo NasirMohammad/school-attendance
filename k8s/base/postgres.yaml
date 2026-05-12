@@ -1,4 +1,17 @@
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: attendance
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-init
@@ -18,12 +31,6 @@ data:
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    INSERT INTO students(name, class_name)
-    VALUES
-      ('Rahim Uddin', 'Class 10'),
-      ('Karim Ahmed', 'Class 9'),
-      ('Nusrat Jahan', 'Class 8')
-    ON CONFLICT DO NOTHING;
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -53,12 +60,18 @@ spec:
           ports:
             - containerPort: 5432
           volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
             - name: init-db
               mountPath: /docker-entrypoint-initdb.d
       volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
         - name: init-db
           configMap:
             name: postgres-init
+
 ---
 apiVersion: v1
 kind: Service

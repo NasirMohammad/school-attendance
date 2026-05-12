@@ -6,7 +6,7 @@ app.get("/api/", (req, res) => {
   });
 });
 
-app.get("/api/students", async (req, res) => {
+app.get("/students", async (req, res) => {
   const result = await pool.query("SELECT * FROM students ORDER BY id ASC");
   res.json(result.rows);
 });

@@ -1,3 +1,7 @@
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+
+const JWT_SECRET = process.env.JWT_SECRET || "school-attendance-secret";
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
@@ -21,6 +25,30 @@ app.get("/", (req, res) => {
     version: "v1",
     status: "running",
   });
+});
+
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  const adminUser = {
+    username: "admin",
+    passwordHash: bcrypt.hashSync("admin123", 10),
+  };
+
+  const isValidUser = username === adminUser.username;
+  const isValidPassword = bcrypt.compareSync(password, adminUser.passwordHash);
+
+  if (!isValidUser || !isValidPassword) {
+    return res.status(401).json({ error: "Invalid username or password" });
+  }
+
+  const token = jwt.sign(
+    { username: adminUser.username },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
+  res.json({ token });
 });
 
 app.get("/students", async (req, res) => {

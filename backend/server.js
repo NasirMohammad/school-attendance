@@ -66,6 +66,23 @@ app.delete("/students/:id", async (req, res) => {
   }
 });
 
+app.put("/students/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, class_name } = req.body;
+
+    const result = await pool.query(
+      "UPDATE students SET name = $1, class_name = $2 WHERE id = $3 RETURNING *",
+      [name, class_name, id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update student" });
+  }
+});
+
 app.post("/attendance", async (req, res) => {
   try {
     const { student_id, status } = req.body;

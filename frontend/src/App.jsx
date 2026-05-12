@@ -9,6 +9,10 @@ function App() {
   const [newName, setNewName] = useState("");
   const [newClass, setNewClass] = useState("");
 
+  const [editId, setEditId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editClass, setEditClass] = useState("");
+
   useEffect(() => {
     loadBackend();
     loadStudents();
@@ -62,6 +66,28 @@ function App() {
     await loadAttendance();
   };
 
+  const startEdit = (student) => {
+    setEditId(student.id);
+    setEditName(student.name);
+    setEditClass(student.class_name);
+  };
+
+  const updateStudent = async (e) => {
+    e.preventDefault();
+
+    await axios.put(`/api/students/${editId}`, {
+      name: editName,
+      class_name: editClass,
+    });
+
+    setEditId(null);
+    setEditName("");
+    setEditClass("");
+
+    await loadStudents();
+    await loadAttendance();
+  };
+
   const presentCount = records.filter((r) => r.status === "present").length;
   const absentCount = records.filter((r) => r.status === "absent").length;
 
@@ -108,10 +134,7 @@ function App() {
           </div>
 
           <div className="p-6 border-b bg-slate-50">
-            <form
-              onSubmit={addStudent}
-              className="grid md:grid-cols-3 gap-4"
-            >
+            <form onSubmit={addStudent} className="grid md:grid-cols-3 gap-4">
               <input
                 type="text"
                 placeholder="Student Name"
@@ -145,32 +168,79 @@ function App() {
                 key={student.id}
                 className="flex items-center justify-between px-6 py-4 hover:bg-slate-50"
               >
-                <div>
-                  <h3 className="text-lg font-semibold">{student.name}</h3>
-                  <p className="text-gray-500">{student.class_name}</p>
+                <div className="flex-1">
+                  {editId === student.id ? (
+                    <form onSubmit={updateStudent} className="flex gap-3">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="border border-slate-300 rounded-lg px-4 py-2"
+                        required
+                      />
+
+                      <input
+                        type="text"
+                        value={editClass}
+                        onChange={(e) => setEditClass(e.target.value)}
+                        className="border border-slate-300 rounded-lg px-4 py-2"
+                        required
+                      />
+
+                      <button
+                        type="submit"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition"
+                      >
+                        Save
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditId(null)}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-lg transition"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <h3 className="text-lg font-semibold">{student.name}</h3>
+                      <p className="text-gray-500">{student.class_name}</p>
+                    </>
+                  )}
                 </div>
 
-                <div className="space-x-3">
-                  <button
-                    onClick={() => markAttendance(student.id, "present")}
-                    className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition"
-                  >
-                    Present
-                  </button>
+                {editId !== student.id && (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => markAttendance(student.id, "present")}
+                      className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition"
+                    >
+                      Present
+                    </button>
 
-                  <button
-                    onClick={() => markAttendance(student.id, "absent")}
-                    className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg transition"
-                  >
-                    Absent
-                  </button>
-                  <button
-                    onClick={() => deleteStudent(student.id)}
-                    className="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2 rounded-lg transition"
-                  >
-                    Delete
-                 </button>
-                </div>
+                    <button
+                      onClick={() => markAttendance(student.id, "absent")}
+                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg transition"
+                    >
+                      Absent
+                    </button>
+
+                    <button
+                      onClick={() => startEdit(student)}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg transition"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => deleteStudent(student.id)}
+                      className="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2 rounded-lg transition"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

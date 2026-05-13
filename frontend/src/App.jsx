@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+axios.defaults.baseURL = "/api";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -26,12 +27,17 @@ function App() {
   };
 
   useEffect(() => {
-    if (token) {
-      loadBackend();
-      loadStudents();
-      loadAttendance();
-    }
-  }, [token]);
+  if (token) {
+
+    axios.defaults.headers.common[
+      "Authorization"
+    ] = `Bearer ${token}`;
+
+    loadBackend();
+    loadStudents();
+    loadAttendance();
+  }
+}, [token]);
 
   const login = async (e) => {
     e.preventDefault();
@@ -41,6 +47,10 @@ function App() {
         username,
         password,
       });
+      
+      axios.defaults.headers.common[
+      "Authorization"
+      ] = `Bearer ${res.data.token}`;
 
       localStorage.setItem("token", res.data.token);
       setToken(res.data.token);

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 function App() {
+  const [token, setToken] = useState("");
+
   const [students, setStudents] = useState([]);
   const [records, setRecords] = useState([]);
   const [status, setStatus] = useState("");
@@ -13,11 +15,37 @@ function App() {
   const [editName, setEditName] = useState("");
   const [editClass, setEditClass] = useState("");
 
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
   useEffect(() => {
-    loadBackend();
-    loadStudents();
-    loadAttendance();
-  }, []);
+    if (token) {
+      loadBackend();
+      loadStudents();
+      loadAttendance();
+    }
+  }, [token]);
+
+  const login = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await axios.post("/api/login", {
+        username,
+        password,
+      });
+
+      setToken(res.data.token);
+      setLoginError("");
+    } catch {
+      setLoginError("Invalid username or password");
+    }
+  };
+
+  const logout = () => {
+    setToken("");
+  };
 
   const loadBackend = async () => {
     try {
@@ -91,12 +119,64 @@ function App() {
   const presentCount = records.filter((r) => r.status === "present").length;
   const absentCount = records.filter((r) => r.status === "absent").length;
 
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
+          <h1 className="text-3xl font-bold mb-6 text-center">
+            School Attendance Login
+          </h1>
+
+          <form onSubmit={login} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full border border-slate-300 rounded-lg px-4 py-3"
+              required
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-slate-300 rounded-lg px-4 py-3"
+              required
+            />
+
+            {loginError && <p className="text-red-600">{loginError}</p>}
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg"
+            >
+              Login
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-gray-500">
+            demo: admin / admin123
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100">
-      <div className="bg-slate-900 text-white px-8 py-4 shadow-lg">
+      <div className="bg-slate-900 text-white px-8 py-4 shadow-lg flex justify-between items-center">
         <h1 className="text-3xl font-bold">
           School Attendance Dashboard CI/CD Success
         </h1>
+
+        <button
+          onClick={logout}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+        >
+          Logout
+        </button>
       </div>
 
       <div className="max-w-6xl mx-auto p-8">
@@ -153,10 +233,7 @@ function App() {
                 required
               />
 
-              <button
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition"
-              >
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg">
                 Add Student
               </button>
             </form>
@@ -172,7 +249,6 @@ function App() {
                   {editId === student.id ? (
                     <form onSubmit={updateStudent} className="flex gap-3">
                       <input
-                        type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         className="border border-slate-300 rounded-lg px-4 py-2"
@@ -180,24 +256,20 @@ function App() {
                       />
 
                       <input
-                        type="text"
                         value={editClass}
                         onChange={(e) => setEditClass(e.target.value)}
                         className="border border-slate-300 rounded-lg px-4 py-2"
                         required
                       />
 
-                      <button
-                        type="submit"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition"
-                      >
+                      <button className="bg-blue-600 text-white px-5 py-2 rounded-lg">
                         Save
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setEditId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-lg transition"
+                        className="bg-gray-500 text-white px-5 py-2 rounded-lg"
                       >
                         Cancel
                       </button>
@@ -214,28 +286,28 @@ function App() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => markAttendance(student.id, "present")}
-                      className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition"
+                      className="bg-green-600 text-white px-5 py-2 rounded-lg"
                     >
                       Present
                     </button>
 
                     <button
                       onClick={() => markAttendance(student.id, "absent")}
-                      className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg transition"
+                      className="bg-red-600 text-white px-5 py-2 rounded-lg"
                     >
                       Absent
                     </button>
 
                     <button
                       onClick={() => startEdit(student)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg transition"
+                      className="bg-yellow-500 text-white px-5 py-2 rounded-lg"
                     >
                       Edit
                     </button>
 
                     <button
                       onClick={() => deleteStudent(student.id)}
-                      className="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2 rounded-lg transition"
+                      className="bg-slate-700 text-white px-5 py-2 rounded-lg"
                     >
                       Delete
                     </button>
@@ -263,20 +335,10 @@ function App() {
 
             <tbody>
               {records.map((record) => (
-                <tr key={record.id} className="border-b hover:bg-slate-50">
+                <tr key={record.id} className="border-b">
                   <td className="p-4 font-semibold">{record.name}</td>
                   <td className="p-4">{record.class_name}</td>
-                  <td className="p-4">
-                    <span
-                      className={
-                        record.status === "present"
-                          ? "bg-green-100 text-green-700 px-3 py-1 rounded-full"
-                          : "bg-red-100 text-red-700 px-3 py-1 rounded-full"
-                      }
-                    >
-                      {record.status}
-                    </span>
-                  </td>
+                  <td className="p-4">{record.status}</td>
                   <td className="p-4">
                     {new Date(record.created_at).toLocaleString()}
                   </td>

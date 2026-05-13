@@ -1,15 +1,15 @@
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-
-const JWT_SECRET = process.env.JWT_SECRET || "school-attendance-secret";
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+const JWT_SECRET = process.env.JWT_SECRET || "school-attendance-secret";
 
 const pool = new Pool({
   host: process.env.DB_HOST || "postgres",
@@ -42,21 +42,16 @@ app.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid username or password" });
   }
 
-  const token = jwt.sign(
-    { username: adminUser.username },
-    JWT_SECRET,
-    { expiresIn: "1h" }
-  );
+  const token = jwt.sign({ username: adminUser.username }, JWT_SECRET, {
+    expiresIn: "1h",
+  });
 
   res.json({ token });
 });
 
 app.get("/students", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM students ORDER BY id ASC"
-    );
-
+    const result = await pool.query("SELECT * FROM students ORDER BY id ASC");
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -72,25 +67,11 @@ app.post("/students", async (req, res) => {
       "INSERT INTO students(name, class_name) VALUES($1, $2) RETURNING *",
       [name, class_name]
     );
-    
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to add student" });
-  }
-});
-
-app.delete("/students/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await pool.query("DELETE FROM attendance WHERE student_id = $1", [id]);
-    await pool.query("DELETE FROM students WHERE id = $1", [id]);
-
-    res.json({ message: "Student deleted" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete student" });
   }
 });
 
@@ -108,6 +89,20 @@ app.put("/students/:id", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update student" });
+  }
+});
+
+app.delete("/students/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await pool.query("DELETE FROM attendance WHERE student_id = $1", [id]);
+    await pool.query("DELETE FROM students WHERE id = $1", [id]);
+
+    res.json({ message: "Student deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete student" });
   }
 });
 

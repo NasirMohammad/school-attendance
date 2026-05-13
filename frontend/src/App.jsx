@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 function App() {
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
 
   const [students, setStudents] = useState([]);
   const [records, setRecords] = useState([]);
@@ -18,6 +18,12 @@ function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+
+  const authConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
 
   useEffect(() => {
     if (token) {
@@ -36,6 +42,7 @@ function App() {
         password,
       });
 
+      localStorage.setItem("token", res.data.token);
       setToken(res.data.token);
       setLoginError("");
     } catch {
@@ -44,13 +51,10 @@ function App() {
   };
 
   const logout = () => {
+    localStorage.removeItem("token");
     setToken("");
-  };
-
-  const authConfig = {
-  headers: {
-    Authorization: `Bearer ${token}`,
-   },
+    setStudents([]);
+    setRecords([]);
   };
 
   const loadBackend = async () => {
@@ -61,73 +65,78 @@ function App() {
       setStatus("Disconnected");
     }
   };
-  
 
   const loadStudents = async () => {
-  const res = await axios.get("/api/students", authConfig);
-  setStudents(res.data);
-};
+    const res = await axios.get("/api/students", authConfig);
+    setStudents(res.data);
+  };
 
-const loadAttendance = async () => {
-  const res = await axios.get("/api/attendance", authConfig);
-  setRecords(res.data);
-};
+  const loadAttendance = async () => {
+    const res = await axios.get("/api/attendance", authConfig);
+    setRecords(res.data);
+  };
 
-const addStudent = async (e) => {
-  e.preventDefault();
+  const addStudent = async (e) => {
+    e.preventDefault();
 
-  await axios.post(
-    "/api/students",
-    {
-      name: newName,
-      class_name: newClass,
-    },
-    authConfig
-  );
+    await axios.post(
+      "/api/students",
+      {
+        name: newName,
+        class_name: newClass,
+      },
+      authConfig
+    );
 
-  setNewName("");
-  setNewClass("");
-  await loadStudents();
-};
+    setNewName("");
+    setNewClass("");
+    await loadStudents();
+  };
 
-const markAttendance = async (id, status) => {
-  await axios.post(
-    "/api/attendance",
-    {
-      student_id: id,
-      status,
-    },
-    authConfig
-  );
+  const markAttendance = async (id, status) => {
+    await axios.post(
+      "/api/attendance",
+      {
+        student_id: id,
+        status,
+      },
+      authConfig
+    );
 
-  await loadAttendance();
-};
+    await loadAttendance();
+  };
 
-const deleteStudent = async (id) => {
-  await axios.delete(`/api/students/${id}`, authConfig);
-  await loadStudents();
-  await loadAttendance();
-};
+  const deleteStudent = async (id) => {
+    await axios.delete(`/api/students/${id}`, authConfig);
+    await loadStudents();
+    await loadAttendance();
+  };
 
-const updateStudent = async (e) => {
-  e.preventDefault();
+  const startEdit = (student) => {
+    setEditId(student.id);
+    setEditName(student.name);
+    setEditClass(student.class_name);
+  };
 
-  await axios.put(
-    `/api/students/${editId}`,
-    {
-      name: editName,
-      class_name: editClass,
-    },
-    authConfig
-  );
+  const updateStudent = async (e) => {
+    e.preventDefault();
 
-  setEditId(null);
-  setEditName("");
-  setEditClass("");
+    await axios.put(
+      `/api/students/${editId}`,
+      {
+        name: editName,
+        class_name: editClass,
+      },
+      authConfig
+    );
 
-  await loadStudents();
-  await loadAttendance();
-};
+    setEditId(null);
+    setEditName("");
+    setEditClass("");
+
+    await loadStudents();
+    await loadAttendance();
+  };
 
   const presentCount = records.filter((r) => r.status === "present").length;
   const absentCount = records.filter((r) => r.status === "absent").length;
@@ -181,7 +190,7 @@ const updateStudent = async (e) => {
     <div className="min-h-screen bg-slate-100">
       <div className="bg-slate-900 text-white px-8 py-4 shadow-lg flex justify-between items-center">
         <h1 className="text-3xl font-bold">
-          School Attendance Dashboard CI/CD Success CHECK
+          School Attendance Dashboard CI/CD Success
         </h1>
 
         <button

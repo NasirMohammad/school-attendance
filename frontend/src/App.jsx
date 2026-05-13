@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-axios.defaults.baseURL = "/api";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");

@@ -31,12 +31,16 @@ app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   if (username !== "admin" || password !== "admin123") {
-    return res.status(401).json({ error: "Invalid username or password" });
+    return res.status(401).json({
+      error: "Invalid username or password",
+    });
   }
 
-  const token = jwt.sign({ username }, JWT_SECRET, {
-    expiresIn: "1h",
-  });
+  const token = jwt.sign(
+    { username },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
 
   res.json({ token });
 });

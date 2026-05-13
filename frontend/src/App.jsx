@@ -64,74 +64,70 @@ function App() {
   
 
   const loadStudents = async () => {
-    const res = await axios.get("/api/students", authConfig)
-    setStudents(res.data);
-  };
+  const res = await axios.get("/api/students", authConfig);
+  setStudents(res.data);
+};
 
-  const loadAttendance = async () => {
-    const res = await axios.get("/api/attendance", authConfig)
-    setRecords(res.data);
-  };
+const loadAttendance = async () => {
+  const res = await axios.get("/api/attendance", authConfig);
+  setRecords(res.data);
+};
 
-  const addStudent = async (e) => {
-    e.preventDefault();
+const addStudent = async (e) => {
+  e.preventDefault();
 
-    await axios.post("/api/students", {
+  await axios.post(
+    "/api/students",
+    {
       name: newName,
       class_name: newClass,
-       },
-      authConfig
-      );
-    };
+    },
+    authConfig
+  );
 
-    setNewName("");
-    setNewClass("");
-    await loadStudents();
-  };
+  setNewName("");
+  setNewClass("");
+  await loadStudents();
+};
 
-  const markAttendance = async (id, status) => {
-    await axios.post(
+const markAttendance = async (id, status) => {
+  await axios.post(
     "/api/attendance",
-     {
+    {
       student_id: id,
       status,
-     },
-      authConfig
-   );
+    },
+    authConfig
+  );
 
-    await loadAttendance();
-  };
+  await loadAttendance();
+};
 
-  const deleteStudent = async (id) => {
-    await axios.delete(`/api/students/${id}`, authConfig);
-    await loadStudents();
-    await loadAttendance();
-  };
+const deleteStudent = async (id) => {
+  await axios.delete(`/api/students/${id}`, authConfig);
+  await loadStudents();
+  await loadAttendance();
+};
 
-  const startEdit = (student) => {
-    setEditId(student.id);
-    setEditName(student.name);
-    setEditClass(student.class_name);
-  };
+const updateStudent = async (e) => {
+  e.preventDefault();
 
-  const updateStudent = async (e) => {
-    e.preventDefault();
-
-    await axios.put(`/api/students/${editId}`,
+  await axios.put(
+    `/api/students/${editId}`,
     {
       name: editName,
       class_name: editClass,
     },
-      authConfig
+    authConfig
   );
 
-    setEditId(null);
-    setEditName("");
-    setEditClass("");
+  setEditId(null);
+  setEditName("");
+  setEditClass("");
 
-    await loadStudents();
-    await loadAttendance();
-  };
+  await loadStudents();
+  await loadAttendance();
+};
 
   const presentCount = records.filter((r) => r.status === "present").length;
   const absentCount = records.filter((r) => r.status === "absent").length;

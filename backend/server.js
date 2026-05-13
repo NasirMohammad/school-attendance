@@ -30,19 +30,11 @@ app.get("/", (req, res) => {
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  const adminUser = {
-    username: "admin",
-    passwordHash: bcrypt.hashSync("admin123", 10),
-  };
-
-  const isValidUser = username === adminUser.username;
-  const isValidPassword = bcrypt.compareSync(password, adminUser.passwordHash);
-
-  if (!isValidUser || !isValidPassword) {
+  if (username !== "admin" || password !== "admin123") {
     return res.status(401).json({ error: "Invalid username or password" });
   }
 
-  const token = jwt.sign({ username: adminUser.username }, JWT_SECRET, {
+  const token = jwt.sign({ username }, JWT_SECRET, {
     expiresIn: "1h",
   });
 

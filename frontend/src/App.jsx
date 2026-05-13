@@ -47,6 +47,12 @@ function App() {
     setToken("");
   };
 
+  const authConfig = {
+  headers: {
+    Authorization: `Bearer ${token}`,
+   },
+  };
+
   const loadBackend = async () => {
     try {
       const res = await axios.get("/api/");
@@ -55,14 +61,15 @@ function App() {
       setStatus("Disconnected");
     }
   };
+  
 
   const loadStudents = async () => {
-    const res = await axios.get("/api/students");
+    const res = await axios.get("/api/students", authConfig)
     setStudents(res.data);
   };
 
   const loadAttendance = async () => {
-    const res = await axios.get("/api/attendance");
+    const res = await axios.get("/api/attendance", authConfig)
     setRecords(res.data);
   };
 
@@ -72,7 +79,10 @@ function App() {
     await axios.post("/api/students", {
       name: newName,
       class_name: newClass,
-    });
+       },
+      authConfig
+      );
+    };
 
     setNewName("");
     setNewClass("");
@@ -80,16 +90,20 @@ function App() {
   };
 
   const markAttendance = async (id, status) => {
-    await axios.post("/api/attendance", {
+    await axios.post(
+    "/api/attendance",
+     {
       student_id: id,
       status,
-    });
+     },
+      authConfig
+   );
 
     await loadAttendance();
   };
 
   const deleteStudent = async (id) => {
-    await axios.delete(`/api/students/${id}`);
+    await axios.delete(`/api/students/${id}`, authConfig);
     await loadStudents();
     await loadAttendance();
   };
@@ -103,10 +117,13 @@ function App() {
   const updateStudent = async (e) => {
     e.preventDefault();
 
-    await axios.put(`/api/students/${editId}`, {
+    await axios.put(`/api/students/${editId}`,
+    {
       name: editName,
       class_name: editClass,
-    });
+    },
+      authConfig
+  );
 
     setEditId(null);
     setEditName("");
@@ -168,7 +185,7 @@ function App() {
     <div className="min-h-screen bg-slate-100">
       <div className="bg-slate-900 text-white px-8 py-4 shadow-lg flex justify-between items-center">
         <h1 className="text-3xl font-bold">
-          School Attendance Dashboard CI/CD Success
+          School Attendance Dashboard CI/CD Success CHECK
         </h1>
 
         <button

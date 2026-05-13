@@ -49,7 +49,25 @@ app.post("/login", async (req, res) => {
   res.json({ token });
 });
 
-app.get("/students", async (req, res) => {
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    return res.status(403).json({ error: "Invalid token" });
+  }
+};
+
+app.get("/students", verifyToken, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM students ORDER BY id ASC");
     res.json(result.rows);
@@ -59,7 +77,7 @@ app.get("/students", async (req, res) => {
   }
 });
 
-app.post("/students", async (req, res) => {
+app.post("/students", verifyToken, async (req, res) => {
   try {
     const { name, class_name } = req.body;
 
@@ -75,7 +93,7 @@ app.post("/students", async (req, res) => {
   }
 });
 
-app.put("/students/:id", async (req, res) => {
+app.put("/students/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, class_name } = req.body;
@@ -92,7 +110,7 @@ app.put("/students/:id", async (req, res) => {
   }
 });
 
-app.delete("/students/:id", async (req, res) => {
+app.delete("/students/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -106,7 +124,7 @@ app.delete("/students/:id", async (req, res) => {
   }
 });
 
-app.post("/attendance", async (req, res) => {
+app.post("/attendance", verifyToken, async (req, res) => {
   try {
     const { student_id, status } = req.body;
 
@@ -122,7 +140,7 @@ app.post("/attendance", async (req, res) => {
   }
 });
 
-app.get("/attendance", async (req, res) => {
+app.get("/attendance", verifyToken, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 

@@ -3,6 +3,7 @@ const cors = require("cors");
 const { Pool } = require("pg");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const redis = require("redis");
 
 const app = express();
 
@@ -17,6 +18,16 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD || "postgres",
   database: process.env.DB_NAME || "attendance",
   port: 5432,
+});
+
+const redisClient = redis.createClient({
+  url: "redis://redis:6379",
+});
+
+redisClient.connect();
+
+redisClient.on("error", (err) => {
+  console.log("Redis Error:", err);
 });
 
 app.get("/", (req, res) => {
@@ -63,11 +74,37 @@ const verifyToken = (req, res, next) => {
 
 app.get("/students", verifyToken, async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM students ORDER BY id ASC");
+
+    const cachedStudents = await redisClient.get("students");
+
+    if (cachedStudents) {
+      console.log("Serving students from Redis cache");
+
+      return res.json(JSON.parse(cachedStudents));
+    }
+
+    console.log("Serving students from PostgreSQL");
+
+    const result = await pool.query(
+      "SELECT * FROM students ORDER BY id ASC"
+    );
+
+    await redisClient.set(
+      "students",
+      JSON.stringify(result.rows),
+      {
+        EX: 60,
+      }
+    );
+
     res.json(result.rows);
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to fetch students" });
+
+    res.status(500).json({
+      error: "Failed to fetch students",
+    });
   }
 });
 
@@ -79,6 +116,8 @@ app.post("/students", verifyToken, async (req, res) => {
       "INSERT INTO students(name, class_name) VALUES($1, $2) RETURNING *",
       [name, class_name]
     );
+
+    await redisClient.del("students");
 
     res.json(result.rows[0]);
   } catch (err) {
@@ -97,6 +136,8 @@ app.put("/students/:id", verifyToken, async (req, res) => {
       [name, class_name, id]
     );
 
+    await redisClient.del("students");
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -111,6 +152,8 @@ app.delete("/students/:id", verifyToken, async (req, res) => {
     await pool.query("DELETE FROM attendance WHERE student_id = $1", [id]);
     await pool.query("DELETE FROM students WHERE id = $1", [id]);
 
+    await redisClient.del("students");
+    
     res.json({ message: "Student deleted" });
   } catch (err) {
     console.error(err);

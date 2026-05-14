@@ -4,6 +4,7 @@ const { Pool } = require("pg");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const redis = require("redis");
+const amqp = require("amqplib");
 
 const app = express();
 
@@ -37,6 +38,31 @@ app.get("/", (req, res) => {
     status: "running",
   });
 });
+
+let channel;
+
+async function connectRabbitMQ() {
+
+  try {
+
+    const connection = await amqp.connect(
+      "amqp://rabbitmq:5672"
+    );
+
+    channel = await connection.createChannel();
+
+    await channel.assertQueue("attendance_queue");
+
+    console.log("RabbitMQ connected");
+
+  } catch (err) {
+
+    console.error("RabbitMQ Error:", err);
+
+  }
+}
+
+connectRabbitMQ();
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -153,7 +179,7 @@ app.delete("/students/:id", verifyToken, async (req, res) => {
     await pool.query("DELETE FROM students WHERE id = $1", [id]);
 
     await redisClient.del("students");
-    
+
     res.json({ message: "Student deleted" });
   } catch (err) {
     console.error(err);
@@ -170,7 +196,20 @@ app.post("/attendance", verifyToken, async (req, res) => {
       [student_id, status]
     );
 
+    channel.sendToQueue(
+      "attendance_queue",
+
+      Buffer.from(
+        JSON.stringify({
+          student_id: id,
+          status,
+          time: new Date(),
+        })
+      )
+     );
+    
     res.json(result.rows[0]);
+    
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to save attendance" });

@@ -196,23 +196,30 @@ app.post("/attendance", verifyToken, async (req, res) => {
       [student_id, status]
     );
 
-    channel.sendToQueue(
-      "attendance_queue",
+    if (channel) {
+      channel.sendToQueue(
+        "attendance_queue",
+        Buffer.from(
+          JSON.stringify({
+            student_id,
+            status,
+            time: new Date(),
+          })
+        )
+      );
 
-      Buffer.from(
-        JSON.stringify({
-          student_id: id,
-          status,
-          time: new Date(),
-        })
-      )
-     );
-    
+      console.log("Attendance event sent to RabbitMQ:", student_id, status);
+    } else {
+      console.log("RabbitMQ channel not ready");
+    }
+
     res.json(result.rows[0]);
-    
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to save attendance" });
+
+    res.status(500).json({
+      error: "Failed to save attendance",
+    });
   }
 });
 

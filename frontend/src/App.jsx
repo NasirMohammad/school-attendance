@@ -42,7 +42,7 @@ function App() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("/login", {
+      const res = await axios.post("/api/login", {
         username,
         password,
       });
@@ -76,12 +76,12 @@ function App() {
   };
 
   const loadStudents = async () => {
-    const res = await axios.get("/students", authConfig);
+    const res = await axios.get("/api/students", authConfig);
     setStudents(res.data);
   };
 
   const loadAttendance = async () => {
-    const res = await axios.get("/attendance", authConfig);
+    const res = await axios.get("/api/attendance", authConfig);
     setRecords(res.data);
   };
 
@@ -89,7 +89,7 @@ function App() {
     e.preventDefault();
 
     await axios.post(
-      "/students",
+      "/api/students",
       {
         name: newName,
         class_name: newClass,
@@ -104,7 +104,7 @@ function App() {
 
   const markAttendance = async (id, status) => {
     await axios.post(
-      "/attendance",
+      "/api/attendance",
       {
         student_id: id,
         status,
@@ -116,7 +116,7 @@ function App() {
   };
 
   const deleteStudent = async (id) => {
-    await axios.delete(`/students/${id}`, authConfig);
+    await axios.delete(`api/students/${id}`, authConfig);
     await loadStudents();
     await loadAttendance();
   };
@@ -131,7 +131,7 @@ function App() {
     e.preventDefault();
 
     await axios.put(
-      `/students/${editId}`,
+      `/api/students/${editId}`,
       {
         name: editName,
         class_name: editClass,

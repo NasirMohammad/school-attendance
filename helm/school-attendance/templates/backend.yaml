@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: attendance-backend
+  namespace: attendance
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: attendance-backend
+
+  template:
+    metadata:
+      labels:
+        app: attendance-backend
+
+    spec:
+      containers:
+        - name: attendance-backend
+          image: erfanasir/school-attendance-backend:v3
+
+          ports:
+            - containerPort: 3000
+       resources:
+            requests:
+            cpu: "100m"
+            memory: "128Mi"
+       limits:
+            cpu: "500m"
+            memory: "512Mi"
+
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: attendance-backend
+  namespace: attendance
+
+spec:
+  type: NodePort
+
+  selector:
+    app: attendance-backend
+
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+      nodePort: 30080

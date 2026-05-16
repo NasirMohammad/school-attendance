@@ -35,9 +35,17 @@ app.get("/", (req, res) => {
   res.json({
     app: "School Attendance System",
     version: "v1",
-    status: "running",
+    status: "running"
   });
 });
+
+app.get("/health", (req, res) => {
+  res.json({
+    app: "School Attendance System",
+    version: "v1",
+    status: "running"
+  });
+});;
 
 let channel;
 

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: attendance-backend
-          image: erfanasir/school-attendance-backend:v3
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
 
           ports:
             - containerPort: 3000

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: erfanasir/school-attendance-frontend:v4
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
 
           ports:
             - containerPort: 80

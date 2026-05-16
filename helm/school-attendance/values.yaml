@@ -1,1 +1,20 @@
 namespace: attendance
+
+backend:
+  image:
+    repository: erfanasir/school-attendance-backend
+    tag: "51"
+
+frontend:
+  image:
+    repository: erfanasir/school-attendance-frontend
+    tag: "52"
+
+postgres:
+  image: postgres:16-alpine
+
+redis:
+  image: redis:7
+
+rabbitmq:
+  image: rabbitmq:3-management

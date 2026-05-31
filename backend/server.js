@@ -35,7 +35,7 @@ app.get("/", (req, res) => {
   res.json({
     app: "School Attendance System",
     version: "v1",
-    status: "running"
+    status: "running",
   });
 });
 
@@ -43,34 +43,49 @@ app.get("/health", (req, res) => {
   res.json({
     app: "School Attendance System",
     version: "v1",
-    status: "running"
+    status: "running",
   });
-});;
+});
 
 let channel;
 
 async function connectRabbitMQ() {
-
   try {
-
-    const connection = await amqp.connect(
-      "amqp://rabbitmq:5672"
-    );
-
+    const connection = await amqp.connect("amqp://rabbitmq:5672");
     channel = await connection.createChannel();
-
     await channel.assertQueue("attendance_queue");
 
     console.log("RabbitMQ connected");
-
   } catch (err) {
-
     console.error("RabbitMQ Error:", err);
-
   }
 }
 
 connectRabbitMQ();
+
+async function publishToCentrifugo(data) {
+  try {
+    const response = await fetch("http://centrifugo:8000/api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "apikey api_secret_key",
+      },
+      body: JSON.stringify({
+        method: "publish",
+        params: {
+          channel: "attendance",
+          data: data,
+        },
+      }),
+    });
+
+    const result = await response.text();
+    console.log("Centrifugo publish result:", result);
+  } catch (err) {
+    console.error("Centrifugo publish error:", err.message);
+  }
+}
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -108,37 +123,25 @@ const verifyToken = (req, res, next) => {
 
 app.get("/students", verifyToken, async (req, res) => {
   try {
-
     const cachedStudents = await redisClient.get("students");
 
     if (cachedStudents) {
       console.log("Serving students from Redis cache");
-
       return res.json(JSON.parse(cachedStudents));
     }
 
     console.log("Serving students from PostgreSQL");
 
-    const result = await pool.query(
-      "SELECT * FROM students ORDER BY id ASC"
-    );
+    const result = await pool.query("SELECT * FROM students ORDER BY id ASC");
 
-    await redisClient.set(
-      "students",
-      JSON.stringify(result.rows),
-      {
-        EX: 60,
-      }
-    );
+    await redisClient.set("students", JSON.stringify(result.rows), {
+      EX: 60,
+    });
 
     res.json(result.rows);
-
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: "Failed to fetch students",
-    });
+    res.status(500).json({ error: "Failed to fetch students" });
   }
 });
 
@@ -204,37 +207,32 @@ app.post("/attendance", verifyToken, async (req, res) => {
       [student_id, status]
     );
 
-    if (channel) {
-      channel.sendToQueue(
-        "attendance_queue",
-        Buffer.from(
-          JSON.stringify({
-            student_id,
-            status,
-            time: new Date(),
-          })
-        )
-      );
+    const eventData = {
+      student_id,
+      status,
+      time: new Date(),
+    };
 
+    if (channel) {
+      channel.sendToQueue("attendance_queue", Buffer.from(JSON.stringify(eventData)));
       console.log("Attendance event sent to RabbitMQ:", student_id, status);
     } else {
       console.log("RabbitMQ channel not ready");
     }
 
+    await publishToCentrifugo(eventData);
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: "Failed to save attendance",
-    });
+    res.status(500).json({ error: "Failed to save attendance" });
   }
 });
 
 app.get("/attendance", verifyToken, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT 
+      SELECT
         attendance.id,
         students.name,
         students.class_name,
